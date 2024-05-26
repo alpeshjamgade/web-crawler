@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	_ "github.com/jackc/pgx/v4/stdlib"
+	"github.com/lib/pq"
 	"log"
 	"time"
 )
@@ -30,7 +31,7 @@ type Seed struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func (f *Seed) GetAll() ([]*Seed, error) {
+func (f *Seed) GetAll(limit int) ([]*Seed, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
@@ -39,9 +40,9 @@ func (f *Seed) GetAll() ([]*Seed, error) {
 		processed,
 		created_at,
 		updated_at
-	FROM seeds ORDER BY created_at asc`
+	FROM seeds ORDER BY created_at asc LIMIT $1`
 
-	rows, err := db.QueryContext(ctx, query)
+	rows, err := db.QueryContext(ctx, query, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -65,4 +66,23 @@ func (f *Seed) GetAll() ([]*Seed, error) {
 	}
 
 	return seeds, nil
+}
+
+func (s *Seed) SaveProcessed(seeds []*Seed) error {
+	var urls []string
+	for _, seed := range seeds {
+		urls = append(urls, seed.Url)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+	defer cancel()
+
+	query := `UPDATE seeds SET processed = true WHERE url in $1`
+	_, err := db.ExecContext(ctx, query, pq.Array(urls))
+	if err != nil {
+		log.Println("Error updating", err)
+		return err
+	}
+
+	return nil
 }
