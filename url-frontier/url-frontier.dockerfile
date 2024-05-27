@@ -7,15 +7,15 @@ COPY . /app
 
 WORKDIR /app
 
-RUN CGO_ENABLED=0 go _build -o ./_build/urlLoaderApp ./cmd
+RUN CGO_ENABLED=0 go build -o _build/urlFrontierApp ./cmd
 
-RUN chmod +x ./_build/urlLoaderApp
+RUN chmod +x ./_build/urlFrontierApp
 
 # _build a tiny docker image
 FROM alpine:latest
 
 RUN mkdir /app
 
-COPY --from=builder /app/_build/urlLoaderApp /app
+COPY --from=builder /app/_build/urlFrontierApp /app
 
-CMD ["/app/urlLoaderApp"]
+CMD ["/app/urlFrontierApp"]

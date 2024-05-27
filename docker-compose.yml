@@ -10,6 +10,33 @@ services:
       mode: replicated
       replicas: 1
     environment:
-      - DATABASE_URL=postgres://postgres@localhost:5432/urlfrontier
-      - RABBITMQ_URL=amqp://guest:guest@localhost:5672
-    network_mode: host
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/urlfrontier
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: urlfrontier
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      - ./data/rmq:/var/lib/rabbitmq
