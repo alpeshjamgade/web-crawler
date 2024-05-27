@@ -22,6 +22,6 @@ down:
 
 ## build_url_frontier: builds the url_frontier binary as a linux executable
 build_url_frontier:
-	@echo "Building broker binary..."
+	@echo "Building url frontier binary..."
 	cd ./url-frontier && env GOOS=linux CGO_ENABLED=0 go build -o ./_build/${URL_FRONTIER_BINARY} ./cmd
 	@echo "Done!"
