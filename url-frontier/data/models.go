@@ -77,7 +77,7 @@ func (s *Seed) SaveProcessed(seeds []*Seed) error {
 	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
 	defer cancel()
 
-	query := `UPDATE seeds SET processed = true WHERE url in $1`
+	query := `UPDATE seeds SET processed = true WHERE url = ANY($1)`
 	_, err := db.ExecContext(ctx, query, pq.Array(urls))
 	if err != nil {
 		log.Println("Error updating", err)
