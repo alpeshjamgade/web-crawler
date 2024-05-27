@@ -30,6 +30,8 @@ func NewPool(maxConn, maxChanPerConn int) (*Pool, error) {
 	if err := pool.init(); err != nil {
 		return nil, err
 	}
+
+	log.Println("Connected to RabbitMQ")
 	return pool, nil
 }
 
@@ -126,35 +128,4 @@ func (p *Pool) Publish(exchange, key string, mandatory, immediate bool, msg amqp
 		msg,       // message to publish
 	)
 	return err
-}
-
-// Consume sets up a consumer for the queue and processes messages
-func (p *Pool) Consume(consumerName string, handler func(amqp.Delivery)) error {
-	ch, err := p.GetChannel()
-	if err != nil {
-		return err
-	}
-	defer p.ReturnChannel(ch)
-
-	msgs, err := ch.Consume(
-		"seeds",      // queue
-		consumerName, // consumer
-		true,         // auto-ack
-		false,        // exclusive
-		false,        // no-local
-		false,        // no-wait
-		nil,          // args
-	)
-	if err != nil {
-		return err
-	}
-
-	// Start a goroutine to handle messages
-	go func() {
-		for msg := range msgs {
-			handler(msg)
-		}
-	}()
-
-	return nil
 }

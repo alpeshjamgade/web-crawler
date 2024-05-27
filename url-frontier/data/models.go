@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	_ "github.com/jackc/pgx/v4/stdlib"
-	"github.com/lib/pq"
 	"log"
 	"time"
 )
@@ -37,7 +36,6 @@ func (f *Seed) GetAll(limit int) ([]*Seed, error) {
 
 	query := `SELECT 
 		url,
-		processed,
 		created_at,
 		updated_at
 	FROM seeds ORDER BY created_at asc LIMIT $1`
@@ -66,23 +64,4 @@ func (f *Seed) GetAll(limit int) ([]*Seed, error) {
 	}
 
 	return seeds, nil
-}
-
-func (s *Seed) SaveProcessed(seeds []*Seed) error {
-	var urls []string
-	for _, seed := range seeds {
-		urls = append(urls, seed.Url)
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
-	defer cancel()
-
-	query := `UPDATE seeds SET processed = true WHERE url = ANY($1)`
-	_, err := db.ExecContext(ctx, query, pq.Array(urls))
-	if err != nil {
-		log.Println("Error updating", err)
-		return err
-	}
-
-	return nil
 }

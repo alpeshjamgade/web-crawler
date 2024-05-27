@@ -61,9 +61,8 @@ func (app *Config) worker(wg *sync.WaitGroup, stopChan chan struct{}) {
 			// fetch configured number of data from db and publish to rmq
 			seeds, _ := app.Models.Seed.GetAll(1000)
 
-			// publish seeds and mark as processed
+			// publish seeds
 			app.publishSeeds(seeds)
-			app.Models.Seed.SaveProcessed(seeds)
 
 			log.Printf("Total %d Messages published in this session. %s", len(seeds), getEmoji(len(seeds)))
 
