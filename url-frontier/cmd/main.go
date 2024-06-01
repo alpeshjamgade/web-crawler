@@ -1,11 +1,16 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"io"
 	"log"
+	"os"
+	"os/signal"
 	"sync"
 	"time"
 	"url-frontier/data"
@@ -19,18 +24,30 @@ type Config struct {
 
 func main() {
 	log.Println("starting url frontier service")
+
+	ctx := context.Background()
+	if err := run(ctx, os.Stdout, os.Args[1:]); err != nil {
+		fmt.Fprintln(os.Stderr, "%s\n", err)
+		os.Exit(1)
+	}
+}
+
+func run(ctx context.Context, w io.Writer, args []string) error {
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
+	defer cancel()
+
 	var app Config
 
 	// connect postgres
 	dbConn := app.connectToDB(5)
 	if dbConn == nil {
-		log.Panic("could not connect to database")
+		return errors.New("failed to connect to DB")
 	}
 
 	// connect rabbitmq
 	pool, err := NewPool(5, 5)
 	if err != nil {
-		log.Fatalf("Failed to create pool: %v", err)
+		return err
 	}
 	defer pool.Close()
 
